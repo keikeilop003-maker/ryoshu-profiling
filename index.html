@@ -613,8 +613,18 @@ function Toast({ message, warn }) {
 
 // ===== APP =====
 
+const LS_KEY = 'ryoshu_posts_v1';
+
+function loadPosts() {
+  try {
+    const saved = localStorage.getItem(LS_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return INITIAL_POSTS;
+}
+
 function App() {
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState(loadPosts);
   const [activeSection, setActiveSection] = useState(0);
   const [selectedPost, setSelectedPost] = useState(null);
   const [userSerial, setUserSerial] = useState('');
@@ -630,7 +640,12 @@ function App() {
   const [toast, setToast] = useState(null);
 
   const textRef = useRef(null);
-  const nextId = useRef(INITIAL_POSTS.length + 1);
+  const nextId = useRef(Math.max(...posts.map(p => p.id), 0) + 1);
+
+  // postsが変わるたびlocalStorageに保存
+  useEffect(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(posts)); } catch(e) {}
+  }, [posts]);
 
   const sectionPosts = posts.filter(p => p.sectionId === activeSection);
 
