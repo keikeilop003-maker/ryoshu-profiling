@@ -4,9 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>絵仏師良秀 プロファイリング｜宇治拾遺物語</title>
+  <meta name="google-site-verification" content="yjghVRjTG6h9tYhuuFIdTyU9QyebDgXuC9N1UvzowVY" />
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,6 +28,7 @@
       --primary: #2c3e7a;
       --accent: #9b2335;
       --admin: #5a2d82;
+      --like: #c0392b;
       --highlight-bg: rgba(255, 210, 60, 0.45);
       --highlight-border: rgba(200, 160, 0, 0.6);
       --highlight-active: rgba(255, 180, 0, 0.65);
@@ -33,62 +42,56 @@
     body { font-family: 'Noto Sans JP', sans-serif; background: var(--paper-dark); color: var(--ink); overflow: hidden; font-size: 15px; }
     .app { display: flex; flex-direction: column; height: 100%; }
 
-    /* HEADER */
+    /* ── HEADER ── */
     .header {
-      background: var(--primary);
-      color: #fff;
-      padding: 0 24px;
-      height: 60px;
+      background: var(--primary); color: #fff;
+      padding: 0 24px; height: 60px;
       display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      z-index: 10;
+      flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;
     }
     .header-left { display: flex; flex-direction: column; }
     .header-title { font-family: 'Noto Serif JP', serif; font-size: 18px; font-weight: 600; letter-spacing: 0.08em; }
     .header-subtitle { font-size: 12px; opacity: 0.65; margin-top: 2px; }
-    .header-right { display: flex; align-items: center; gap: 16px; }
-    .header-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 15px; font-size: 13px; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    .header-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; font-size: 13px; white-space: nowrap; }
 
-    .serial-wrap { display: flex; align-items: center; gap: 8px; }
+    .serial-wrap { display: flex; align-items: center; gap: 7px; }
     .serial-label { font-size: 12px; opacity: 0.75; white-space: nowrap; }
     .serial-field {
-      font-family: 'Courier New', monospace;
-      font-size: 16px; font-weight: 700; letter-spacing: 0.15em;
-      width: 80px; padding: 4px 8px;
-      border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
-      background: rgba(255,255,255,0.1); color: #fff;
-      text-transform: uppercase; outline: none; text-align: center;
-      transition: border-color 0.15s, background 0.15s;
+      font-family: 'Courier New', monospace; font-size: 16px; font-weight: 700; letter-spacing: 0.15em;
+      width: 80px; padding: 4px 8px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
+      background: rgba(255,255,255,0.1); color: #fff; text-transform: uppercase;
+      outline: none; text-align: center; transition: border-color 0.15s, background 0.15s;
     }
     .serial-field::placeholder { color: rgba(255,255,255,0.35); font-size: 12px; letter-spacing: 0; font-family: 'Noto Sans JP', sans-serif; }
     .serial-field:focus { border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.2); }
     .serial-field.valid { border-color: rgba(100,220,100,0.8); }
 
-    /* Admin button in header */
     .btn-admin-toggle {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: #fff; border-radius: 6px;
-      padding: 5px 13px; font-size: 13px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3);
+      color: #fff; border-radius: 6px; padding: 5px 12px; font-size: 13px;
       font-family: 'Noto Sans JP', sans-serif; font-weight: 500;
-      cursor: pointer; transition: background 0.15s;
-      display: flex; align-items: center; gap: 6px;
+      cursor: pointer; transition: background 0.15s; display: flex; align-items: center; gap: 5px;
     }
     .btn-admin-toggle:hover { background: rgba(255,255,255,0.22); }
     .btn-admin-toggle.active { background: rgba(220,180,255,0.25); border-color: rgba(200,150,255,0.5); }
-
     .admin-badge {
       display: inline-flex; align-items: center; gap: 5px;
       background: rgba(150,80,220,0.3); border: 1px solid rgba(180,120,255,0.5);
-      color: #ddc0ff; border-radius: 20px;
-      padding: 4px 12px; font-size: 12px; font-weight: 700;
+      color: #ddc0ff; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700;
     }
 
-    /* COLUMNS */
+    /* sync dot */
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; transition: background 0.4s; }
+    .sync-dot.ok { background: #6ee06e; }
+    .sync-dot.loading { background: #f0c040; animation: pulse 0.8s infinite; }
+    .sync-dot.error { background: #e06e6e; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── COLUMNS ── */
     .columns { display: flex; flex: 1; overflow: hidden; }
 
-    /* LEFT PANEL */
+    /* ── LEFT PANEL ── */
     .left-panel {
       width: 36%; min-width: 260px;
       background: var(--paper); border-right: 1px solid var(--border);
@@ -104,15 +107,14 @@
     .original-text {
       font-family: 'Noto Serif JP', serif; font-size: 17px; line-height: 2.2;
       color: var(--ink); letter-spacing: 0.04em;
-      white-space: pre-wrap; word-break: break-all;
-      user-select: text; cursor: text;
+      white-space: pre-wrap; word-break: break-all; user-select: text; cursor: text;
     }
     .text-segment { display: inline; }
-    .text-highlight { background: var(--highlight-bg); border-bottom: 2px solid var(--highlight-border); border-radius: 2px; transition: background 0.2s; }
+    .text-highlight { background: var(--highlight-bg); border-bottom: 2px solid var(--highlight-border); border-radius: 2px; }
     .text-highlight-active { background: var(--highlight-active); border-bottom: 2px solid rgba(180,130,0,0.8); }
     .text-highlight-pending { background: rgba(100,180,100,0.3); border-bottom: 2px solid rgba(60,150,60,0.5); }
 
-    /* RIGHT PANEL */
+    /* ── RIGHT PANEL ── */
     .right-panel { width: 64%; background: var(--paper-dark); display: flex; flex-direction: column; overflow: hidden; }
     .right-panel-header {
       padding: 13px 18px; border-bottom: 1px solid var(--border); background: var(--paper-dark);
@@ -123,26 +125,22 @@
     .btn-primary {
       background: var(--accent); color: #fff; border: none; border-radius: 6px;
       padding: 8px 16px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; font-weight: 500;
-      cursor: pointer; transition: background 0.15s, transform 0.1s;
-      display: flex; align-items: center; gap: 5px;
+      cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; gap: 5px;
     }
     .btn-primary:hover { background: #7d1b2a; }
     .btn-primary:active { transform: scale(0.97); }
     .btn-secondary {
       background: transparent; color: var(--ink-light); border: 1px solid var(--border);
-      border-radius: 6px; padding: 7px 15px; font-size: 13px;
-      font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+      border-radius: 6px; padding: 7px 15px; font-size: 13px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
     }
     .btn-secondary:hover { background: rgba(0,0,0,0.05); }
 
-    /* Section tabs */
     .section-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border); background: var(--paper-dark); flex-shrink: 0; padding: 0 8px; }
     .section-tabs::-webkit-scrollbar { height: 0; }
     .section-tab { padding: 10px 16px; font-size: 13px; color: var(--ink-faint); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; font-weight: 500; }
     .section-tab:hover { color: var(--ink-light); }
     .section-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-    /* Post list — 3-column grid */
     .post-list {
       flex: 1; overflow-y: auto; padding: 14px;
       display: grid; grid-template-columns: repeat(3, 1fr);
@@ -150,54 +148,74 @@
     }
     .post-list::-webkit-scrollbar { width: 4px; }
     .post-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
     .empty-state {
       grid-column: 1 / -1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 60px 24px; text-align: center; color: var(--ink-faint); gap: 12px;
+      align-items: center; justify-content: center; padding: 60px 24px;
+      text-align: center; color: var(--ink-faint); gap: 12px;
     }
     .empty-icon { font-size: 38px; opacity: 0.4; }
     .empty-text { font-size: 14px; line-height: 1.7; }
+    .loading-overlay {
+      grid-column: 1 / -1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 60px; gap: 14px; color: var(--ink-faint);
+    }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Post card */
+    /* ── POST CARD ── */
     .post-card {
       background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
       padding: 12px 13px; cursor: pointer;
       transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
       display: flex; flex-direction: column; gap: 8px;
-      position: relative;
     }
     .post-card:hover { box-shadow: var(--shadow); border-color: #bbb0a0; transform: translateY(-1px); }
     .post-card.active { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(44,62,122,0.15); background: #f5f7ff; }
     .post-card.admin-mode { border-color: rgba(150,80,220,0.25); }
     .post-card.admin-mode:hover { border-color: rgba(150,80,220,0.5); }
-
     .card-header { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
     .card-section-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--primary); background: rgba(44,62,122,0.08); padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
     .card-serial { font-size: 12px; font-weight: 700; color: var(--ink-faint); font-family: 'Courier New', monospace; letter-spacing: 0.08em; }
     .card-interp { font-size: 13px; color: var(--ink); line-height: 1.75; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 
-    /* Admin actions on card */
-    .card-admin-actions {
-      display: flex; gap: 6px; border-top: 1px solid rgba(150,80,220,0.15);
-      padding-top: 8px; margin-top: 2px;
+    /* いいねボタン */
+    .card-footer { display: flex; align-items: center; justify-content: flex-end; padding-top: 4px; border-top: 1px solid var(--border); margin-top: 2px; }
+    .like-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: 1px solid var(--border); border-radius: 20px;
+      padding: 4px 11px; font-size: 13px; cursor: pointer;
+      color: var(--ink-faint); font-family: 'Noto Sans JP', sans-serif;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+      user-select: none;
     }
+    .like-btn:hover { border-color: #e08080; color: var(--like); background: rgba(192,57,43,0.05); }
+    .like-btn.liked { border-color: #e08080; color: var(--like); background: rgba(192,57,43,0.07); font-weight: 700; }
+    .like-btn.liked:hover { background: rgba(192,57,43,0.14); }
+    .like-btn.pop { animation: likePop 0.35s cubic-bezier(0.36,0.07,0.19,0.97); }
+    @keyframes likePop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.35); }
+      70%  { transform: scale(0.9); }
+      100% { transform: scale(1); }
+    }
+    .like-heart { font-size: 15px; line-height: 1; }
+
+    /* admin card actions */
+    .card-admin-actions { display: flex; gap: 6px; border-top: 1px solid rgba(150,80,220,0.15); padding-top: 8px; margin-top: 2px; }
     .btn-card-edit {
       flex: 1; background: rgba(44,62,122,0.07); color: var(--primary);
       border: 1px solid rgba(44,62,122,0.2); border-radius: 5px;
-      padding: 5px 0; font-size: 12px; font-family: 'Noto Sans JP', sans-serif;
-      cursor: pointer; transition: background 0.1s;
+      padding: 5px 0; font-size: 12px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
     }
     .btn-card-edit:hover { background: rgba(44,62,122,0.14); }
     .btn-card-delete {
       flex: 1; background: rgba(155,35,53,0.07); color: var(--accent);
       border: 1px solid rgba(155,35,53,0.2); border-radius: 5px;
-      padding: 5px 0; font-size: 12px; font-family: 'Noto Sans JP', sans-serif;
-      cursor: pointer; transition: background 0.1s;
+      padding: 5px 0; font-size: 12px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
     }
     .btn-card-delete:hover { background: rgba(155,35,53,0.15); }
 
-    /* Selection tooltip */
+    /* ── SELECTION TOOLTIP ── */
     .selection-tooltip {
       position: fixed; z-index: 100; background: var(--primary); color: #fff;
       border-radius: 8px; padding: 8px 12px; box-shadow: var(--shadow-lg);
@@ -209,13 +227,13 @@
       content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
       border: 6px solid transparent; border-bottom-color: var(--primary); border-top: none;
     }
-    @keyframes tooltipIn { from { opacity: 0; transform: translateX(-50%) translateY(4px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes tooltipIn { from { opacity:0; transform:translateX(-50%) translateY(4px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
     .tooltip-excerpt { font-family: 'Noto Serif JP', serif; font-size: 13px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.85; }
     .btn-tooltip { background: #fff; color: var(--primary); border: none; border-radius: 5px; padding: 5px 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; white-space: nowrap; }
     .btn-tooltip:hover { background: #eef0f8; }
     .btn-tooltip-cancel { background: transparent; color: rgba(255,255,255,0.6); border: none; padding: 4px 6px; cursor: pointer; font-size: 17px; line-height: 1; }
 
-    /* Modal */
+    /* ── MODAL ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .modal { background: var(--paper); border-radius: 14px; box-shadow: var(--shadow-lg); width: 540px; max-width: 92vw; max-height: 88vh; overflow-y: auto; animation: slideUp 0.2s ease; }
@@ -239,8 +257,6 @@
     textarea.form-input:focus { border-color: var(--primary); }
     .char-counter { text-align: right; font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
     .char-counter.warn { color: var(--accent); }
-
-    /* Admin code input */
     .admin-code-input {
       font-family: 'Courier New', monospace; font-size: 28px; font-weight: 700;
       letter-spacing: 0.3em; width: 100%; padding: 12px; text-align: center;
@@ -250,7 +266,7 @@
     .admin-code-input:focus { border-color: var(--admin); }
     .admin-code-error { color: var(--accent); font-size: 13px; text-align: center; margin-top: 8px; }
 
-    /* Detail panel */
+    /* ── DETAIL PANEL ── */
     .detail-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background: var(--paper); display: flex; flex-direction: column; animation: slideIn 0.2s ease; z-index: 5; }
     @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     .detail-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
@@ -261,29 +277,55 @@
     .detail-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--ink-faint); text-transform: uppercase; margin-bottom: 7px; }
     .detail-excerpt { background: rgba(255,210,60,0.12); border-left: 4px solid var(--highlight-border); border-radius: 0 8px 8px 0; padding: 14px 16px; font-family: 'Noto Serif JP', serif; font-size: 15px; line-height: 1.9; color: var(--ink); margin-bottom: 20px; }
     .detail-interp { font-size: 15px; line-height: 1.9; color: var(--ink); margin-bottom: 20px; }
-    .detail-meta { padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink-faint); display: flex; align-items: center; }
+    .detail-meta { padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink-faint); display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 
-    /* Toast */
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2d4a2d; color: #fff; border-radius: 8px; padding: 11px 22px; font-size: 14px; z-index: 500; box-shadow: var(--shadow-lg); animation: toastIn 0.2s ease; }
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2d4a2d; color: #fff; border-radius: 8px; padding: 11px 22px; font-size: 14px; z-index: 500; box-shadow: var(--shadow-lg); animation: toastIn 0.2s ease; white-space: nowrap; }
     .toast.warn { background: #7d1b2a; }
-    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
   </style>
 </head>
 <body>
 <div id="root"></div>
+
+<!-- Firebase 初期化 -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC3wo7wMiEDfhNaWtTXeLI2jDOyhqDz7jI",
+    authDomain: "ryoshu-profiling.firebaseapp.com",
+    databaseURL: "https://ryoshu-profiling-default-rtdb.firebaseio.com",
+    projectId: "ryoshu-profiling",
+    storageBucket: "ryoshu-profiling.firebasestorage.app",
+    messagingSenderId: "1028046765972",
+    appId: "1:1028046765972:web:61148432000e39df951981",
+    measurementId: "G-DMGGC2P2QR"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
 
 <script type="text/babel">
 const { useState, useRef, useEffect, useCallback } = React;
 
 const ADMIN_CODE = '1121';
 
-// ===== DATA =====
+// ───── ブラウザ固有ID（いいね重複防止）─────
+function getClientId() {
+  const KEY = 'ryoshu_client_id';
+  let id = localStorage.getItem(KEY);
+  if (!id) {
+    id = 'c' + Math.random().toString(36).substr(2, 10);
+    localStorage.setItem(KEY, id);
+  }
+  return id;
+}
+const CLIENT_ID = getClientId();
 
+// ───── テキストデータ ─────
 function findIndices(text, s) {
   const i = text.indexOf(s);
   return i < 0 ? { startIndex: 0, endIndex: s.length } : { startIndex: i, endIndex: i + s.length };
 }
-
 const SEC0 = `これも今は昔、絵仏師良秀といふありけり。家の隣より火出で来て、風おしおほひてせめければ、逃げ出でて大路へ出でにけり。人のかかする仏もおはしけり。また、衣着ぬ妻子なども、さながら内にありけり。それも知らず、ただ逃げ出でたるをことにして、向かひのつらに立てり。`;
 const SEC1 = `見れば、すでに我が家に移りて、煙、炎、くゆりけるまで、おほかた、向かひのつらに立ちて眺めければ、「あさましきこと。」とて、人ども来とぶらひけれど、騒がず。「いかに。」と人言ひければ、向かひに立ちて、家の焼くるを見て、うちうなづきて、時々笑ひけり。「あはれ、しつるせうとくかな。年ごろはわろくかきけるものかな。」と言ふときに、とぶらひに来たる者ども、「こはいかに、かくては立ちたまへるぞ。あさましきことかな。物のつきたまへるか。」と言ひければ、`;
 const SEC2 = `「なんでふ物のつくべきぞ。年ごろ不動尊の火炎をあしくかきけるなり。今見れば、かうこそ燃えけれと、心得つるなり。これこそ、せうとくよ。この道を立てて世にあらむには、仏だによくかきたてまつらば、百千の家も出で来なむ。`;
@@ -296,16 +338,8 @@ const SECTIONS = [
   { id: 3, title: "４：良秀の言葉②・結末", text: SEC3 },
 ];
 
-const INITIAL_POSTS = [
-  { id:1, sectionId:0, excerptText:"それも知らず、ただ逃げ出でたるをことにして", ...findIndices(SEC0,"それも知らず、ただ逃げ出でたるをことにして"), interpretation:"妻子が家の中にいるのを知りながら自分だけ逃げ出した行動。家族への情よりも自己保身を優先する冷淡さが表れている。良秀という人物の自己中心的な性格を端的に示す場面。", userSerial:"1A23", createdAt:"2026-04-22" },
-  { id:2, sectionId:1, excerptText:"うちうなづきて、時々笑ひけり", ...findIndices(SEC1,"うちうなづきて、時々笑ひけり"), interpretation:"自分の家が燃えているにもかかわらず、うなずき笑うという常軌を逸した反応。悲劇の場面を芸術の観察対象として捉えており、人間的な感情より絵師としての観察眼が勝っている。", userSerial:"2B45", createdAt:"2026-04-22" },
-  { id:3, sectionId:1, excerptText:"あはれ、しつるせうとくかな", ...findIndices(SEC1,"あはれ、しつるせうとくかな"), interpretation:"火事という災難を「儲け物」と表現する逆転した価値観。「あはれ」という感動詞が悲嘆ではなく感動・称賛として使われており、芸術的発見の喜びを示している。", userSerial:"3C67", createdAt:"2026-04-22" },
-  { id:4, sectionId:2, excerptText:"年ごろ不動尊の火炎をあしくかきけるなり", ...findIndices(SEC2,"年ごろ不動尊の火炎をあしくかきけるなり"), interpretation:"長年の「下手」を自ら認める言葉。良秀にとって火事は自分の絵の誤りを正す機会であった。芸術的真実の追求が常識的な価値観を完全に上回っていることを示す。", userSerial:"4D89", createdAt:"2026-04-22" },
-  { id:5, sectionId:3, excerptText:"あざ笑ひてこそ立てりけれ", ...findIndices(SEC3,"あざ笑ひてこそ立てりけれ"), interpretation:"見舞いに来た人々を嘲笑う。芸術的悟りを得た者の優越感と他者への軽蔑が凝縮された描写。良秀の傲慢さと絵師としての確信が最も鮮明に現れる箇所。", userSerial:"1A23", createdAt:"2026-04-22" },
-];
 
-// ===== HELPERS =====
-
+// ───── ヘルパー ─────
 function getSelectionIndices(el) {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;
@@ -330,14 +364,72 @@ function buildSegments(fullText, start, end, type) {
   ].filter(seg => seg.text.length > 0);
 }
 
-// ===== COMPONENTS =====
+// ───── Firebase フック：投稿 ─────
+function usePosts() {
+  const [posts, setPosts]       = useState([]);
+  const [syncState, setSyncState] = useState('loading');
+
+  useEffect(() => {
+    const postsRef = db.ref('posts');
+    setSyncState('loading');
+
+    const unsub = postsRef.on('value', (snap) => {
+      const data = snap.val();
+      setPosts(data ? Object.values(data).sort((a, b) => String(a.id).localeCompare(String(b.id))) : []);
+      setSyncState('ok');
+    }, (err) => { console.error(err); setSyncState('error'); });
+
+    return () => postsRef.off('value', unsub);
+  }, []);
+
+  const addPost    = useCallback((p) => db.ref(`posts/${p.id}`).set(p), []);
+  const updatePost = useCallback((p) => db.ref(`posts/${p.id}`).set(p), []);
+  const deletePost = useCallback((id) => db.ref(`posts/${id}`).remove(), []);
+
+  return { posts, syncState, addPost, updatePost, deletePost };
+}
+
+// ───── Firebase フック：いいね ─────
+function useLikes() {
+  // likesMap: { [postId]: { [clientId]: true } }
+  const [likesMap, setLikesMap] = useState({});
+
+  useEffect(() => {
+    const ref = db.ref('likes');
+    const unsub = ref.on('value', (snap) => {
+      setLikesMap(snap.val() || {});
+    });
+    return () => ref.off('value', unsub);
+  }, []);
+
+  const toggleLike = useCallback((postId) => {
+    const ref = db.ref(`likes/${postId}/${CLIENT_ID}`);
+    ref.once('value', (snap) => {
+      if (snap.val()) ref.remove();
+      else ref.set(true);
+    });
+  }, []);
+
+  const getLikeCount = useCallback((postId) => {
+    const entry = likesMap[postId];
+    return entry ? Object.keys(entry).length : 0;
+  }, [likesMap]);
+
+  const isLiked = useCallback((postId) => {
+    return !!(likesMap[postId] && likesMap[postId][CLIENT_ID]);
+  }, [likesMap]);
+
+  return { toggleLike, getLikeCount, isLiked };
+}
+
+// ───── コンポーネント ─────
 
 function HighlightedText({ text, highlightStart, highlightEnd, highlightType, onMouseUp, textRef }) {
   const segs = buildSegments(text, highlightStart, highlightEnd, highlightType || 'highlight');
-  const cls = { highlight: 'text-highlight', active: 'text-highlight-active', pending: 'text-highlight-pending', normal: '' };
+  const cls = { highlight:'text-highlight', active:'text-highlight-active', pending:'text-highlight-pending', normal:'' };
   return (
     <div className="original-text" ref={textRef} onMouseUp={onMouseUp}>
-      {segs.map((seg, i) => <span key={i} className={`text-segment ${cls[seg.type] || ''}`}>{seg.text}</span>)}
+      {segs.map((seg, i) => <span key={i} className={`text-segment ${cls[seg.type]||''}`}>{seg.text}</span>)}
     </div>
   );
 }
@@ -354,26 +446,47 @@ function SelectionTooltip({ tooltip, onExcerpt, onCancel }) {
   );
 }
 
-function PostCard({ post, sections, isActive, isAdmin, onClick, onEdit, onDelete }) {
-  const section = sections.find(s => s.id === post.sectionId);
+function LikeButton({ postId, toggleLike, getLikeCount, isLiked }) {
+  const [pop, setPop] = useState(false);
+  const liked = isLiked(postId);
+  const count = getLikeCount(postId);
 
-  const handleEdit = (e) => { e.stopPropagation(); onEdit(post); };
-  const handleDelete = (e) => { e.stopPropagation(); onDelete(post.id); };
+  const handleClick = (e) => {
+    e.stopPropagation();
+    toggleLike(postId);
+    setPop(true);
+    setTimeout(() => setPop(false), 400);
+  };
 
   return (
-    <div
-      className={`post-card ${isActive ? 'active' : ''} ${isAdmin ? 'admin-mode' : ''}`}
-      onClick={() => onClick(post)}
-      title="クリックして本文の抜粋箇所をハイライト"
+    <button
+      className={`like-btn ${liked ? 'liked' : ''} ${pop ? 'pop' : ''}`}
+      onClick={handleClick}
+      title={liked ? 'いいねを取り消す' : 'いいね！'}
     >
+      <span className="like-heart">{liked ? '❤️' : '🤍'}</span>
+      <span>{count > 0 ? count : ''}</span>
+    </button>
+  );
+}
+
+function PostCard({ post, sections, isActive, isAdmin, onClick, onEdit, onDelete, toggleLike, getLikeCount, isLiked }) {
+  const section = sections.find(s => s.id === post.sectionId);
+  const handleEdit   = (e) => { e.stopPropagation(); onEdit(post); };
+  const handleDelete = (e) => { e.stopPropagation(); onDelete(post.id); };
+  return (
+    <div className={`post-card ${isActive ? 'active' : ''} ${isAdmin ? 'admin-mode' : ''}`} onClick={() => onClick(post)}>
       <div className="card-header">
-        <span className="card-section-badge">{section?.title?.split('：')[0] || `§${post.sectionId + 1}`}</span>
+        <span className="card-section-badge">{section?.title?.split('：')[0] || `§${post.sectionId+1}`}</span>
         <span className="card-serial">{post.userSerial || '----'}</span>
       </div>
       <div className="card-interp">{post.interpretation}</div>
+      <div className="card-footer">
+        <LikeButton postId={post.id} toggleLike={toggleLike} getLikeCount={getLikeCount} isLiked={isLiked} />
+      </div>
       {isAdmin && (
         <div className="card-admin-actions">
-          <button className="btn-card-edit" onClick={handleEdit}>✏ 編集</button>
+          <button className="btn-card-edit"   onClick={handleEdit}>✏ 編集</button>
           <button className="btn-card-delete" onClick={handleDelete}>🗑 削除</button>
         </div>
       )}
@@ -381,17 +494,14 @@ function PostCard({ post, sections, isActive, isAdmin, onClick, onEdit, onDelete
   );
 }
 
-/* 管理者ログインモーダル */
 function AdminLoginModal({ onLogin, onCancel }) {
-  const [code, setCode] = useState('');
+  const [code, setCode]   = useState('');
   const [error, setError] = useState(false);
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (code === ADMIN_CODE) { onLogin(); }
     else { setError(true); setCode(''); setTimeout(() => setError(false), 2000); }
   };
-
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal admin-modal small">
@@ -403,21 +513,14 @@ function AdminLoginModal({ onLogin, onCancel }) {
           <div className="modal-body">
             <div className="form-group">
               <label className="form-label">管理者コードを入力してください</label>
-              <input
-                type="password"
-                className="admin-code-input"
-                maxLength={10}
-                value={code}
-                onChange={e => setCode(e.target.value)}
-                placeholder="••••"
-                autoFocus
-              />
+              <input type="password" className="admin-code-input" maxLength={10}
+                value={code} onChange={e => setCode(e.target.value)} placeholder="••••" autoFocus />
               {error && <div className="admin-code-error">コードが正しくありません</div>}
             </div>
           </div>
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onCancel}>キャンセル</button>
-            <button type="submit" className="btn-primary" style={{ background: 'var(--admin)' }}>ログイン</button>
+            <button type="submit" className="btn-primary" style={{ background:'var(--admin)' }}>ログイン</button>
           </div>
         </form>
       </div>
@@ -425,26 +528,23 @@ function AdminLoginModal({ onLogin, onCancel }) {
   );
 }
 
-/* 投稿編集モーダル（管理者用） */
 function EditModal({ post, sections, onSave, onCancel }) {
   const [interp, setInterp] = useState(post.interpretation);
   const [serial, setSerial] = useState(post.userSerial || '');
   const MAX = 400;
   const section = sections.find(s => s.id === post.sectionId);
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!interp.trim()) return;
     onSave({ ...post, interpretation: interp.trim(), userSerial: serial.toUpperCase() });
   };
-
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal admin-modal">
         <div className="modal-header">
           <div>
             <div className="modal-title admin">投稿を編集</div>
-            <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 2 }}>{section?.title}</div>
+            <div style={{ fontSize:13, color:'var(--ink-faint)', marginTop:2 }}>{section?.title}</div>
           </div>
           <button className="modal-close" onClick={onCancel}>×</button>
         </div>
@@ -452,18 +552,9 @@ function EditModal({ post, sections, onSave, onCancel }) {
           <div className="modal-body">
             <div className="form-group">
               <label className="form-label">ユーザーシリアル番号</label>
-              <input
-                type="text" maxLength={4}
-                value={serial}
+              <input type="text" maxLength={4} value={serial}
                 onChange={e => setSerial(e.target.value.toUpperCase())}
-                style={{
-                  fontFamily: "'Courier New', monospace", fontSize: 20, fontWeight: 700,
-                  letterSpacing: '0.18em', width: 88, padding: '6px 8px',
-                  border: '2px solid var(--admin)', borderRadius: 6,
-                  textAlign: 'center', outline: 'none', background: '#fff', color: 'var(--ink)',
-                  textTransform: 'uppercase',
-                }}
-              />
+                style={{ fontFamily:"'Courier New',monospace", fontSize:20, fontWeight:700, letterSpacing:'0.18em', width:88, padding:'6px 8px', border:'2px solid var(--admin)', borderRadius:6, textAlign:'center', outline:'none', background:'#fff', color:'var(--ink)', textTransform:'uppercase' }} />
             </div>
             <div className="form-group">
               <label className="form-label">抜粋（変更不可）</label>
@@ -471,20 +562,13 @@ function EditModal({ post, sections, onSave, onCancel }) {
             </div>
             <div className="form-group">
               <label className="form-label">解釈の内容</label>
-              <textarea
-                className="form-input"
-                value={interp}
-                onChange={e => setInterp(e.target.value)}
-                maxLength={MAX}
-                required
-                autoFocus
-              />
+              <textarea className="form-input" value={interp} onChange={e => setInterp(e.target.value)} maxLength={MAX} required autoFocus />
               <div className={`char-counter ${interp.length > MAX * 0.9 ? 'warn' : ''}`}>{interp.length} / {MAX}</div>
             </div>
           </div>
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onCancel}>キャンセル</button>
-            <button type="submit" className="btn-primary" style={{ background: 'var(--admin)' }}>保存する</button>
+            <button type="submit" className="btn-primary" style={{ background:'var(--admin)' }}>保存する</button>
           </div>
         </form>
       </div>
@@ -492,14 +576,12 @@ function EditModal({ post, sections, onSave, onCancel }) {
   );
 }
 
-/* 投稿作成モーダル */
 function CreateModal({ pendingSelection, sectionTitle, userSerial, onSerialChange, onSubmit, onReselect, onCancel }) {
-  const [interp, setInterp] = useState('');
+  const [interp, setInterp]         = useState('');
   const [localSerial, setLocalSerial] = useState(userSerial || '');
   const MAX = 400;
   const serialOk = /^[0-9A-Za-z]{4}$/.test(localSerial);
   const canSubmit = pendingSelection && interp.trim().length > 0 && serialOk;
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!canSubmit) return;
@@ -507,14 +589,13 @@ function CreateModal({ pendingSelection, sectionTitle, userSerial, onSerialChang
     onSerialChange(serial);
     onSubmit(interp.trim(), serial);
   };
-
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal">
         <div className="modal-header">
           <div>
             <div className="modal-title">根拠を選んで解釈する</div>
-            <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 2 }}>{sectionTitle}</div>
+            <div style={{ fontSize:13, color:'var(--ink-faint)', marginTop:2 }}>{sectionTitle}</div>
           </div>
           <button className="modal-close" onClick={onCancel}>×</button>
         </div>
@@ -522,22 +603,12 @@ function CreateModal({ pendingSelection, sectionTitle, userSerial, onSerialChang
           <div className="modal-body">
             <div className="form-group">
               <label className="form-label">ユーザーシリアル番号</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input
-                  type="text" maxLength={4} placeholder="例：1A32"
-                  value={localSerial}
-                  onChange={e => setLocalSerial(e.target.value.toUpperCase())}
-                  autoFocus
-                  style={{
-                    fontFamily: "'Courier New', monospace", fontSize: 20, fontWeight: 700,
-                    letterSpacing: '0.18em', width: 88, padding: '6px 8px', textAlign: 'center',
-                    border: `2px solid ${serialOk ? 'var(--primary)' : 'var(--border)'}`,
-                    borderRadius: 6, outline: 'none', background: '#fff', color: 'var(--ink)',
-                    textTransform: 'uppercase', transition: 'border-color 0.15s',
-                  }}
-                  required
-                />
-                <span style={{ fontSize: 13, color: serialOk ? '#2d7a2d' : 'var(--ink-faint)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <input type="text" maxLength={4} placeholder="例：1A32"
+                  value={localSerial} onChange={e => setLocalSerial(e.target.value.toUpperCase())} autoFocus
+                  style={{ fontFamily:"'Courier New',monospace", fontSize:20, fontWeight:700, letterSpacing:'0.18em', width:88, padding:'6px 8px', textAlign:'center', border:`2px solid ${serialOk ? 'var(--primary)' : 'var(--border)'}`, borderRadius:6, outline:'none', background:'#fff', color:'var(--ink)', textTransform:'uppercase', transition:'border-color 0.15s' }}
+                  required />
+                <span style={{ fontSize:13, color: serialOk ? '#2d7a2d' : 'var(--ink-faint)' }}>
                   {serialOk ? '✓ 有効です' : '英数字4文字で入力'}
                 </span>
               </div>
@@ -558,11 +629,9 @@ function CreateModal({ pendingSelection, sectionTitle, userSerial, onSerialChang
             </div>
             <div className="form-group">
               <label className="form-label">良秀の人物像への解釈</label>
-              <textarea
-                className="form-input"
+              <textarea className="form-input"
                 placeholder="この抜粋から、良秀という人物のどのような側面が読み取れますか？根拠を踏まえて記述してください。"
-                value={interp} onChange={e => setInterp(e.target.value)} maxLength={MAX} required
-              />
+                value={interp} onChange={e => setInterp(e.target.value)} maxLength={MAX} required />
               <div className={`char-counter ${interp.length > MAX * 0.9 ? 'warn' : ''}`}>{interp.length} / {MAX}</div>
             </div>
           </div>
@@ -578,17 +647,19 @@ function CreateModal({ pendingSelection, sectionTitle, userSerial, onSerialChang
   );
 }
 
-function DetailPanel({ post, sections, isAdmin, onBack, onEdit, onDelete }) {
-  const section = sections.find(s => s.id === post.sectionId);
+function DetailPanel({ post, sections, isAdmin, onBack, onEdit, onDelete, toggleLike, getLikeCount, isLiked }) {
+  const section  = sections.find(s => s.id === post.sectionId);
+  const liked    = isLiked(post.id);
+  const count    = getLikeCount(post.id);
   return (
     <div className="detail-panel">
       <div className="detail-header">
         <button className="detail-back" onClick={onBack}>←</button>
         <span className="detail-section-badge">{section?.title}</span>
         {isAdmin && (
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <button className="btn-card-edit" style={{ padding: '5px 14px' }} onClick={() => onEdit(post)}>✏ 編集</button>
-            <button className="btn-card-delete" style={{ padding: '5px 14px' }} onClick={() => onDelete(post.id)}>🗑 削除</button>
+          <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
+            <button className="btn-card-edit"   style={{ padding:'5px 14px' }} onClick={() => onEdit(post)}>✏ 編集</button>
+            <button className="btn-card-delete" style={{ padding:'5px 14px' }} onClick={() => onDelete(post.id)}>🗑 削除</button>
           </div>
         )}
       </div>
@@ -598,9 +669,12 @@ function DetailPanel({ post, sections, isAdmin, onBack, onEdit, onDelete }) {
         <div className="detail-label">人物像への解釈</div>
         <div className="detail-interp">{post.interpretation}</div>
         <div className="detail-meta">
-          <span style={{ fontFamily: "'Courier New', monospace", fontWeight: 700, letterSpacing: '0.1em' }}>{post.userSerial || '----'}</span>
-          <span style={{ margin: '0 8px', opacity: 0.4 }}>·</span>
+          <span style={{ fontFamily:"'Courier New',monospace", fontWeight:700, letterSpacing:'0.1em' }}>{post.userSerial || '----'}</span>
+          <span style={{ opacity:0.4 }}>·</span>
           <span>{post.createdAt}</span>
+          <span style={{ marginLeft:'auto' }}>
+            <LikeButton postId={post.id} toggleLike={toggleLike} getLikeCount={getLikeCount} isLiked={isLiked} />
+          </span>
         </div>
       </div>
     </div>
@@ -611,42 +685,24 @@ function Toast({ message, warn }) {
   return <div className={`toast ${warn ? 'warn' : ''}`}>{message}</div>;
 }
 
-// ===== APP =====
-
-const LS_KEY = 'ryoshu_posts_v1';
-
-function loadPosts() {
-  try {
-    const saved = localStorage.getItem(LS_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch(e) {}
-  return INITIAL_POSTS;
-}
-
+// ───── APP ─────
 function App() {
-  const [posts, setPosts] = useState(loadPosts);
-  const [activeSection, setActiveSection] = useState(0);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [userSerial, setUserSerial] = useState('');
-  const [headerSerial, setHeaderSerial] = useState('');
+  const { posts, syncState, addPost, updatePost, deletePost } = usePosts();
+  const { toggleLike, getLikeCount, isLiked }                = useLikes();
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [activeSection, setActiveSection]   = useState(0);
+  const [selectedPost, setSelectedPost]     = useState(null);
+  const [userSerial, setUserSerial]         = useState('');
+  const [headerSerial, setHeaderSerial]     = useState('');
+  const [isAdmin, setIsAdmin]               = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [editingPost, setEditingPost] = useState(null);
-
-  const [tooltip, setTooltip] = useState(null);
+  const [editingPost, setEditingPost]       = useState(null);
+  const [tooltip, setTooltip]               = useState(null);
   const [pendingSelection, setPendingSelection] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [showCreateModal, setShowCreateModal]   = useState(false);
+  const [toast, setToast]                   = useState(null);
 
   const textRef = useRef(null);
-  const nextId = useRef(Math.max(...posts.map(p => p.id), 0) + 1);
-
-  // postsが変わるたびlocalStorageに保存
-  useEffect(() => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(posts)); } catch(e) {}
-  }, [posts]);
-
   const sectionPosts = posts.filter(p => p.sectionId === activeSection);
 
   const currentHighlight = selectedPost && selectedPost.sectionId === activeSection
@@ -655,7 +711,15 @@ function App() {
       ? { start: pendingSelection.startIndex, end: pendingSelection.endIndex, type: 'pending' }
       : null;
 
-  const showToast = (msg, warn = false) => { setToast({ msg, warn }); setTimeout(() => setToast(null), 2200); };
+  const showToast = (msg, warn = false) => {
+    setToast({ msg, warn });
+    setTimeout(() => setToast(null), 2200);
+  };
+
+  // 他クライアントで削除された投稿が詳細表示中なら閉じる
+  useEffect(() => {
+    if (selectedPost && !posts.find(p => p.id === selectedPost.id)) setSelectedPost(null);
+  }, [posts]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -688,10 +752,10 @@ function App() {
     setTooltip(null);
   };
 
-  const handleSubmit = (interp, serial) => {
+  const handleSubmit = async (interp, serial) => {
     if (!pendingSelection) return;
     const newPost = {
-      id: nextId.current++,
+      id: `post_${Date.now()}`,
       sectionId: activeSection,
       excerptText: pendingSelection.text,
       startIndex: pendingSelection.startIndex,
@@ -700,26 +764,31 @@ function App() {
       userSerial: serial,
       createdAt: new Date().toISOString().split('T')[0],
     };
-    setPosts(prev => [...prev, newPost]);
-    setShowCreateModal(false);
-    setPendingSelection(null);
-    showToast('✓ 投稿を追加しました');
+    try {
+      await addPost(newPost);
+      setShowCreateModal(false);
+      setPendingSelection(null);
+      showToast('✓ 投稿を追加しました');
+    } catch { showToast('保存に失敗しました。接続を確認してください。', true); }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm('この投稿を削除しますか？')) return;
-    setPosts(prev => prev.filter(p => p.id !== id));
-    if (selectedPost?.id === id) setSelectedPost(null);
-    showToast('投稿を削除しました');
+    try {
+      await deletePost(id);
+      // いいねデータも合わせて削除
+      db.ref(`likes/${id}`).remove();
+      showToast('投稿を削除しました');
+    } catch { showToast('削除に失敗しました。', true); }
   };
 
-  const handleEdit = (post) => { setEditingPost(post); };
-
-  const handleSaveEdit = (updated) => {
-    setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
-    if (selectedPost?.id === updated.id) setSelectedPost(updated);
-    setEditingPost(null);
-    showToast('✓ 投稿を更新しました');
+  const handleSaveEdit = async (updated) => {
+    try {
+      await updatePost(updated);
+      if (selectedPost?.id === updated.id) setSelectedPost(updated);
+      setEditingPost(null);
+      showToast('✓ 投稿を更新しました');
+    } catch { showToast('更新に失敗しました。', true); }
   };
 
   const handleCardClick = (post) => {
@@ -739,6 +808,8 @@ function App() {
 
   const section = SECTIONS.find(s => s.id === activeSection);
   const serialValid = /^[0-9A-Z]{4}$/.test(headerSerial);
+  const syncDotClass = syncState === 'ok' ? 'ok' : syncState === 'error' ? 'error' : 'loading';
+  const syncLabel    = syncState === 'ok' ? '同期済み' : syncState === 'error' ? '接続エラー' : '接続中…';
 
   return (
     <div className="app">
@@ -748,26 +819,19 @@ function App() {
           <div className="header-subtitle">宇治拾遺物語『絵仏師良秀』より</div>
         </div>
         <div className="header-right">
+          <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, opacity:0.75 }}>
+            <span className={`sync-dot ${syncDotClass}`}></span>{syncLabel}
+          </div>
           {isAdmin && <div className="admin-badge">⚙ 管理者モード</div>}
           <div className="serial-wrap">
             <span className="serial-label">シリアル番号</span>
-            <input
-              className={`serial-field ${serialValid ? 'valid' : ''}`}
-              type="text" maxLength={4} placeholder="1A32"
-              value={headerSerial}
-              onChange={e => {
-                const v = e.target.value.toUpperCase();
-                setHeaderSerial(v);
-                if (/^[0-9A-Z]{4}$/.test(v)) setUserSerial(v);
-              }}
-              title="あなたのシリアル番号（英数字4文字）"
-            />
+            <input className={`serial-field ${serialValid ? 'valid' : ''}`}
+              type="text" maxLength={4} placeholder="1A32" value={headerSerial}
+              onChange={e => { const v = e.target.value.toUpperCase(); setHeaderSerial(v); if (/^[0-9A-Z]{4}$/.test(v)) setUserSerial(v); }}
+              title="あなたのシリアル番号（英数字4文字）" />
           </div>
-          <button
-            className={`btn-admin-toggle ${isAdmin ? 'active' : ''}`}
-            onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)}
-            title={isAdmin ? '管理者モードを終了' : '管理者ログイン'}
-          >
+          <button className={`btn-admin-toggle ${isAdmin ? 'active' : ''}`}
+            onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)}>
             {isAdmin ? '🔓 ログアウト' : '🔑 管理者'}
           </button>
           <div className="header-badge">{posts.length} 件の解釈</div>
@@ -775,14 +839,12 @@ function App() {
       </header>
 
       <div className="columns">
-        {/* LEFT */}
+        {/* 左：原文 */}
         <div className="left-panel">
           <div className="panel-header">
             <div className="panel-label">原文テキスト</div>
             <div className="section-title-display">{section?.title}</div>
-            <div className="selection-hint">
-              <span>✍</span>テキストをドラッグして選択し、抜粋できます
-            </div>
+            <div className="selection-hint"><span>✍</span>テキストをドラッグして選択し、抜粋できます</div>
           </div>
           <div className="text-scroll">
             <HighlightedText
@@ -796,8 +858,8 @@ function App() {
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="right-panel" style={{ position: 'relative' }}>
+        {/* 右：解釈一覧 */}
+        <div className="right-panel" style={{ position:'relative' }}>
           <div className="right-panel-header">
             <div>
               <div className="panel-label">解釈一覧</div>
@@ -817,69 +879,51 @@ function App() {
           </div>
 
           <div className="post-list">
-            {sectionPosts.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">📜</div>
-                <div className="empty-text">このセクションにはまだ解釈がありません。<br/>左側の本文からテキストを選択して、<br/>良秀の人物像を分析してみましょう。</div>
-              </div>
+            {syncState === 'loading' && posts.length === 0 ? (
+              <div className="loading-overlay"><div className="spinner"></div><div style={{ fontSize:13 }}>データを読み込み中…</div></div>
+            ) : syncState === 'error' ? (
+              <div className="empty-state"><div className="empty-icon">⚠️</div><div className="empty-text">Firebaseへの接続に失敗しました。<br/>インターネット接続を確認してください。</div></div>
+            ) : sectionPosts.length === 0 ? (
+              <div className="empty-state"><div className="empty-icon">📜</div><div className="empty-text">このセクションにはまだ解釈がありません。<br/>左側の本文からテキストを選択して、<br/>良秀の人物像を分析してみましょう。</div></div>
             ) : (
               sectionPosts.map(post => (
-                <PostCard
-                  key={post.id} post={post} sections={SECTIONS}
-                  isActive={selectedPost?.id === post.id}
-                  isAdmin={isAdmin}
-                  onClick={handleCardClick}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
+                <PostCard key={post.id} post={post} sections={SECTIONS}
+                  isActive={selectedPost?.id === post.id} isAdmin={isAdmin}
+                  onClick={handleCardClick} onEdit={setEditingPost} onDelete={handleDelete}
+                  toggleLike={toggleLike} getLikeCount={getLikeCount} isLiked={isLiked} />
               ))
             )}
           </div>
 
           {selectedPost && (
-            <DetailPanel
-              post={selectedPost} sections={SECTIONS}
+            <DetailPanel post={selectedPost} sections={SECTIONS}
               isAdmin={isAdmin}
-              onBack={() => setSelectedPost(null)}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+              onBack={() => setSelectedPost(null)} onEdit={setEditingPost} onDelete={handleDelete}
+              toggleLike={toggleLike} getLikeCount={getLikeCount} isLiked={isLiked} />
           )}
         </div>
       </div>
 
-      <SelectionTooltip
-        tooltip={tooltip}
-        onExcerpt={handleExcerptClick}
-        onCancel={() => { setTooltip(null); setPendingSelection(null); window.getSelection()?.removeAllRanges(); }}
-      />
+      <SelectionTooltip tooltip={tooltip} onExcerpt={handleExcerptClick}
+        onCancel={() => { setTooltip(null); setPendingSelection(null); window.getSelection()?.removeAllRanges(); }} />
 
       {showCreateModal && (
-        <CreateModal
-          pendingSelection={pendingSelection}
-          sectionTitle={section?.title}
-          userSerial={userSerial}
-          onSerialChange={setUserSerial}
+        <CreateModal pendingSelection={pendingSelection} sectionTitle={section?.title}
+          userSerial={userSerial} onSerialChange={setUserSerial}
           onSubmit={handleSubmit}
           onReselect={() => { setShowCreateModal(false); setPendingSelection(null); }}
-          onCancel={() => { setShowCreateModal(false); setPendingSelection(null); }}
-        />
+          onCancel={() => { setShowCreateModal(false); setPendingSelection(null); }} />
       )}
 
       {showAdminLogin && (
         <AdminLoginModal
           onLogin={() => { setIsAdmin(true); setShowAdminLogin(false); showToast('✓ 管理者モードで入りました'); }}
-          onCancel={() => setShowAdminLogin(false)}
-        />
+          onCancel={() => setShowAdminLogin(false)} />
       )}
 
       {editingPost && (
-        <EditModal
-          post={editingPost}
-          sections={SECTIONS}
-          onSave={handleSaveEdit}
-          onCancel={() => setEditingPost(null)}
-        />
+        <EditModal post={editingPost} sections={SECTIONS}
+          onSave={handleSaveEdit} onCancel={() => setEditingPost(null)} />
       )}
 
       {toast && <Toast message={toast.msg} warn={toast.warn} />}
